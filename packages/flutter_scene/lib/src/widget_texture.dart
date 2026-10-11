@@ -622,6 +622,14 @@ class _RenderWidgetTexture extends RenderProxyBox {
             } else if (wrapped != null) {
               _controller._publishWrapped(wrapped, stopwatch.elapsed);
             } else {
+              // Read back in a later event-loop task than the frame that
+              // painted this capture. On the web (skwasm) a readback
+              // resizes the same offscreen surface the screen is drawn on;
+              // started in the painting frame's task, it interleaves with
+              // that frame's own draw, which then comes out at the
+              // capture's size and leaves the rest of the page blank until
+              // the readback finishes.
+              await Future<void>.delayed(Duration.zero);
               final bytes = await image.toByteData(
                 format: ui.ImageByteFormat.rawStraightRgba,
               );
